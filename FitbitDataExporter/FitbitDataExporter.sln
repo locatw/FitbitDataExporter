@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.489
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FitbitDataExporter", "FitbitDataExporter\FitbitDataExporter.fsproj", "{DD234D73-BE5B-4C8E-9603-1D1DC3B761B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DD234D73-BE5B-4C8E-9603-1D1DC3B761B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD234D73-BE5B-4C8E-9603-1D1DC3B761B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD234D73-BE5B-4C8E-9603-1D1DC3B761B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD234D73-BE5B-4C8E-9603-1D1DC3B761B1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3AF1B3E1-CD79-40CF-B4C1-C94FC480CE03}
+	EndGlobalSection
+EndGlobal

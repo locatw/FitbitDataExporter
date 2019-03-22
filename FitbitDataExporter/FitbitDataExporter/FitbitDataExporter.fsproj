@@ -14,6 +14,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="DataModel.fs" />
+    <Compile Include="FitbitApi.fs" />
+    <Compile Include="Exporter.fs" />
     <Content Include="Secret.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

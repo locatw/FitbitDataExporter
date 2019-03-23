@@ -29,19 +29,23 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWri
 
         new TimeSpan(hours, minutes, seconds)
 
-    let writeHeartRateIntradayTimeSeriesToFileAsync (heartRateIntradayTimeSeries : DataModel.HeartRateIntradayTimeSeries.Root) (date : DateTimeOffset) =
+    let writeDataToFileAsync (dataKind : DataModel.DataKind) (json : JsonValue) (date : DateTimeOffset) =
         async {
+            let dataKindString =
+                match dataKind with
+                | DataModel.DataKind.HeartRateIntradayTimeSeries -> "heart_rate_intraday_time_series"
+                | DataModel.DataKind.SleepLogs -> "sleep_logs"
+                | _ -> failwith (sprintf "Unknown data kind: %s" (dataKind.ToString()))
             let localDate = date.LocalDateTime
-            let fileName = sprintf "heart_rate_intraday_time_series_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
-            do! jsonFileWriter.WriteAsync(fileName, heartRateIntradayTimeSeries.JsonValue)
+            let fileName = sprintf "%s_%04d_%02d_%02d.json" dataKindString localDate.Year localDate.Month localDate.Day
+            do! jsonFileWriter.WriteAsync(fileName, json)
         }
 
+    let writeHeartRateIntradayTimeSeriesToFileAsync (heartRateIntradayTimeSeries : DataModel.HeartRateIntradayTimeSeries.Root) (date : DateTimeOffset) =
+        writeDataToFileAsync DataModel.DataKind.HeartRateIntradayTimeSeries heartRateIntradayTimeSeries.JsonValue date
+
     let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
-        async {
-            let localDate = date.LocalDateTime
-            let fileName = sprintf "sleep_logs_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
-            do! jsonFileWriter.WriteAsync(fileName, sleepLogs.JsonValue)
-        }
+        writeDataToFileAsync DataModel.DataKind.SleepLogs sleepLogs.JsonValue date
 
     let rec exportHeartRateTimeSeriesAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
         async {

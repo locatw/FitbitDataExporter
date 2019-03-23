@@ -182,6 +182,10 @@ let private ProfileSample = """
 }
 """
 
+type DataKind =
+| HeartRateIntradayTimeSeries = 0
+| SleepLogs = 1
+
 type HeartRateIntradayTimeSeries = JsonProvider<HeartRateIntradayTimeSeriesSample>
 
 type SleepLogs = JsonProvider<SleepLogsSample, RootName="SleepLogs">

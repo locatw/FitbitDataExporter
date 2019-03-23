@@ -14,7 +14,8 @@ let loadSecret (filePath : string) =
 let main _ =
     let secret = loadSecret @".\Secret.json"
     let client = new FitbitClient(secret.UserId, secret.AccessToken)
+    let exporter = new DataExporter(client)
 
-    Exporter.exportAsync client |> Async.RunSynchronously
+    exporter.ExportAsync() |> Async.RunSynchronously
 
     0

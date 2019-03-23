@@ -22,6 +22,9 @@ type JsonFileWriter (outputDir : string) =
 [<Literal>]
 let secretFilePath = @".\Secret.json"
 
+[<Literal>]
+let exportDataRootDirectoryPath = @".\ExportData"
+
 let loadSecret (filePath : string) =
     try
         use reader = new StreamReader(filePath)
@@ -31,15 +34,14 @@ let loadSecret (filePath : string) =
     with
     | _ as e -> Result.Error e
 
-let configureNLog () =
-    let now = DateTimeOffset.Now
+let configureNLog (startUpAt : DateTimeOffset) =
     let config = new NLog.Config.LoggingConfiguration()
 
     // log format like: [2019/03/23 22:38:15.712] [INFO ] message
     let layout = new NLog.Layouts.SimpleLayout("[${date}] [${level:uppercase=true:padding=-5}] ${message}")
 
     let logFile = new NLog.Targets.FileTarget("logFile")
-    let fileName = sprintf "export_%s.log" (now.ToString("yyyyMMddhhmmssfff"))
+    let fileName = sprintf "export_%s.log" (startUpAt.ToString("yyyyMMddhhmmssfff"))
     logFile.FileName <- new NLog.Layouts.SimpleLayout(fileName)
     logFile.Layout <- layout
 
@@ -51,26 +53,39 @@ let configureNLog () =
 
     NLog.LogManager.Configuration <- config
 
-let createLogger () =
-    configureNLog ()
+let createLogger startUpAt =
+    configureNLog startUpAt
     NLog.LogManager.GetCurrentClassLogger() :> NLog.ILogger
 
-let run (logger : NLog.ILogger) (secret : Secret.Root) =
+let createExportDataDirectory (startUpAt : DateTimeOffset) =
+    let dateTimeDirName = startUpAt.ToString("yyyyMMddhhmmssfff")
+    let dirPath = Path.Combine(exportDataRootDirectoryPath, dateTimeDirName)
+
+    if not (Directory.Exists(dirPath)) then
+        Directory.CreateDirectory(dirPath) |> ignore
+
+    dirPath
+
+let run (logger : NLog.ILogger) (secret : Secret.Root) (startUpAt : DateTimeOffset) =
+    let exportDataDirPath = createExportDataDirectory startUpAt
+
     let client = new FitbitClient(secret.UserId, secret.AccessToken)
     let exportLogger = new DataExportLogger(logger)
-    let jsonFileWriter = new JsonFileWriter(".")
+    let jsonFileWriter = new JsonFileWriter(exportDataDirPath)
     let exporter = new DataExporter(client, exportLogger, jsonFileWriter)
 
     exporter.ExportAsync() |> Async.RunSynchronously
 
 [<EntryPoint>]
 let main _ =
-    let logger = createLogger ()
+    let startUpAt = DateTimeOffset.Now
+
+    let logger = createLogger startUpAt
 
     let result = loadSecret secretFilePath
     match result with
     | Result.Ok secret ->
-        run logger secret
+        run logger secret startUpAt
         0
     | Result.Error e ->
         match e with

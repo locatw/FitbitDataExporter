@@ -5,6 +5,12 @@ open FSharp.Data
 open System.IO
 open System
 
+[<Literal>]
+let SecretFilePath = @".\Secret.json"
+
+[<Literal>]
+let ExportDataRootDirectoryPath = @".\ExportData"
+
 type Secret = JsonProvider<"""{"UserId": "user-id", "AccessToken": "token"}""">
 
 type JsonFileWriter (outputDir : string) =
@@ -18,12 +24,6 @@ type JsonFileWriter (outputDir : string) =
                 use writer = new StreamWriter(filePath)
                 json.WriteTo(writer, JsonSaveOptions.None)
             }
-
-[<Literal>]
-let secretFilePath = @".\Secret.json"
-
-[<Literal>]
-let exportDataRootDirectoryPath = @".\ExportData"
 
 let loadSecret (filePath : string) =
     try
@@ -59,7 +59,7 @@ let createLogger startUpAt =
 
 let createExportDataDirectory (startUpAt : DateTimeOffset) =
     let dateTimeDirName = startUpAt.ToString("yyyyMMddhhmmssfff")
-    let dirPath = Path.Combine(exportDataRootDirectoryPath, dateTimeDirName)
+    let dirPath = Path.Combine(ExportDataRootDirectoryPath, dateTimeDirName)
 
     if not (Directory.Exists(dirPath)) then
         Directory.CreateDirectory(dirPath) |> ignore
@@ -82,7 +82,7 @@ let main _ =
 
     let logger = createLogger startUpAt
 
-    let result = loadSecret secretFilePath
+    let result = loadSecret SecretFilePath
     match result with
     | Result.Ok secret ->
         run logger secret startUpAt

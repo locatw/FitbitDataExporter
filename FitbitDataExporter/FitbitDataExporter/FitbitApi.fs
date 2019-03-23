@@ -6,6 +6,7 @@ open System.Net.Http
 type FitbitClient(userId : string, accessToken : string) =
     let apiUrl = "https://api.fitbit.com"
     let version = "1.2"
+    let baseUrl = sprintf "%s/%s/user/%s" apiUrl version userId
 
     let client = new HttpClient()
 
@@ -22,7 +23,7 @@ type FitbitClient(userId : string, accessToken : string) =
     member __.GetHeartRateIntradayTimeSeriesAsync(date : DateTimeOffset) =
         async {
             let dateValue = formatDateInLocal date
-            let url = sprintf "%s/%s/user/%s/activities/heart/date/%s/1d/1sec.json" apiUrl version userId dateValue
+            let url = sprintf "%s/activities/heart/date/%s/1d/1sec.json" baseUrl dateValue
             let request = makeRequest HttpMethod.Get url
             let! response = client.SendAsync(request) |> Async.AwaitTask
             let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
@@ -33,7 +34,7 @@ type FitbitClient(userId : string, accessToken : string) =
     member __.GetSleepLogsAsync(date : DateTimeOffset) =
         async {
             let dateValue = formatDateInLocal date
-            let url = sprintf "%s/%s/user/%s/sleep/date/%s.json" apiUrl version userId dateValue
+            let url = sprintf "%s/sleep/date/%s.json" baseUrl dateValue
             let request = makeRequest HttpMethod.Get url
             let! response = client.SendAsync(request) |> Async.AwaitTask
             let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
@@ -43,7 +44,7 @@ type FitbitClient(userId : string, accessToken : string) =
 
     member __.GetProfileAsync() =
         async {
-            let url = sprintf "%s/%s/user/%s/profile.json" apiUrl version userId
+            let url = sprintf "%s/profile.json" baseUrl
             let request = makeRequest HttpMethod.Get url
             let! response = client.SendAsync(request) |> Async.AwaitTask
             let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask

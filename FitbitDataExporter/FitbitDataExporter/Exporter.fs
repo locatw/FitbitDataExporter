@@ -5,7 +5,10 @@ open FSharp.Data
 open System
 open System.IO
 
-type DataExporter(client : FitbitClient) =
+type IDataExportLogger =
+    abstract member InfoSleepLogs : DateTimeOffset -> unit
+
+type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
     let makeOffset offsetFromUtcMillis =
         let mutable value = offsetFromUtcMillis
 
@@ -37,6 +40,8 @@ type DataExporter(client : FitbitClient) =
 
             if sleepLogs.Sleep.Length <> 0 then
                 writeSleepLogsToFile sleepLogs date
+
+                logger.InfoSleepLogs(date)
 
                 do! Async.Sleep 1000
 

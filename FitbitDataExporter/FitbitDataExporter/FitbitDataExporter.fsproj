@@ -17,6 +17,7 @@
     <Compile Include="DataModel.fs" />
     <Compile Include="FitbitApi.fs" />
     <Compile Include="Exporter.fs" />
+    <Compile Include="Logging.fs" />
     <Content Include="Secret.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -25,6 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="FSharp.Data" Version="3.0.1" />
+    <PackageReference Include="NLog" Version="4.6.0" />
   </ItemGroup>
 
   <ItemGroup>

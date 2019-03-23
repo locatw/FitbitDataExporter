@@ -41,11 +41,11 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWri
             do! jsonFileWriter.WriteAsync(fileName, json)
         }
 
-    let writeHeartRateIntradayTimeSeriesToFileAsync (heartRateIntradayTimeSeries : DataModel.HeartRateIntradayTimeSeries.Root) (date : DateTimeOffset) =
-        writeDataToFileAsync DataModel.DataKind.HeartRateIntradayTimeSeries heartRateIntradayTimeSeries.JsonValue date
+    let writeHeartRateIntradayTimeSeriesToFileAsync (heartRateIntradayTimeSeries : DataModel.HeartRateIntradayTimeSeries.Root) =
+        writeDataToFileAsync DataModel.DataKind.HeartRateIntradayTimeSeries heartRateIntradayTimeSeries.JsonValue
 
-    let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
-        writeDataToFileAsync DataModel.DataKind.SleepLogs sleepLogs.JsonValue date
+    let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) =
+        writeDataToFileAsync DataModel.DataKind.SleepLogs sleepLogs.JsonValue
 
     let rec exportAllDayDataAsync(exportOneDayData : DateTimeOffset -> Async<unit>) (date : DateTimeOffset) (endDate : DateTimeOffset) =
         async {

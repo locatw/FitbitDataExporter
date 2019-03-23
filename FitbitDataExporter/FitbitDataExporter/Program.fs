@@ -7,6 +7,18 @@ open System
 
 type Secret = JsonProvider<"""{"UserId": "user-id", "AccessToken": "token"}""">
 
+type JsonFileWriter (outputDir : string) =
+    let makeFilePath fileName =
+        Path.Combine(outputDir, fileName)
+
+    interface IJsonFileWriter with
+        member __.WriteAsync(fileName : string, json : JsonValue) =
+            async {
+                let filePath = makeFilePath fileName
+                use writer = new StreamWriter(filePath)
+                json.WriteTo(writer, JsonSaveOptions.None)
+            }
+
 [<Literal>]
 let secretFilePath = @".\Secret.json"
 
@@ -46,7 +58,8 @@ let createLogger () =
 let run (logger : NLog.ILogger) (secret : Secret.Root) =
     let client = new FitbitClient(secret.UserId, secret.AccessToken)
     let exportLogger = new DataExportLogger(logger)
-    let exporter = new DataExporter(client, exportLogger)
+    let jsonFileWriter = new JsonFileWriter(".")
+    let exporter = new DataExporter(client, exportLogger, jsonFileWriter)
 
     exporter.ExportAsync() |> Async.RunSynchronously
 

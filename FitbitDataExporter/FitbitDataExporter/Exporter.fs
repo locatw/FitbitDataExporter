@@ -3,12 +3,14 @@
 open FitbitDataExporter.FitbitApi
 open FSharp.Data
 open System
-open System.IO
 
 type IDataExportLogger =
     abstract member InfoSleepLogs : DateTimeOffset -> unit
 
-type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
+type IJsonFileWriter =
+    abstract member WriteAsync : string * JsonValue -> Async<unit>
+
+type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWriter : IJsonFileWriter) =
     let makeOffset offsetFromUtcMillis =
         let mutable value = offsetFromUtcMillis
 
@@ -25,20 +27,18 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
 
         new TimeSpan(hours, minutes, seconds)
 
-    let writeToFile(filePath : string, json : JsonValue) =
-        use writer = new StreamWriter(filePath)
-        json.WriteTo(writer, JsonSaveOptions.None)
-
-    let writeSleepLogsToFile (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
-        let localDate = date.LocalDateTime
-        let filePath = sprintf @".\sleep_logs_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
-        writeToFile(filePath, sleepLogs.JsonValue)
+    let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
+        async {
+            let localDate = date.LocalDateTime
+            let fileName = sprintf "sleep_logs_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
+            do! jsonFileWriter.WriteAsync(fileName, sleepLogs.JsonValue)
+        }
 
     let rec exportSleepLogsAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
         async {
             if date < endDate then
                 let! sleepLogs = client.GetSleepLogsAsync(date)
-                writeSleepLogsToFile sleepLogs date
+                do! writeSleepLogsToFileAsync sleepLogs date
 
                 logger.InfoSleepLogs(date)
 

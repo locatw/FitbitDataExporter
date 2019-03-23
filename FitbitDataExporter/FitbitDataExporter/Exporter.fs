@@ -34,28 +34,30 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
         let filePath = sprintf @".\sleep_logs_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
         writeToFile(filePath, sleepLogs.JsonValue)
 
-    let rec exportSleepLogsAsync (date : DateTimeOffset) =
+    let rec exportSleepLogsAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
         async {
-            let! sleepLogs = client.GetSleepLogsAsync(date)
-
-            if sleepLogs.Sleep.Length <> 0 then
+            if date < endDate then
+                let! sleepLogs = client.GetSleepLogsAsync(date)
                 writeSleepLogsToFile sleepLogs date
 
                 logger.InfoSleepLogs(date)
 
                 do! Async.Sleep 1000
 
-                return! exportSleepLogsAsync (date.AddDays(1.0))
+                return! exportSleepLogsAsync (date.AddDays(1.0)) endDate
             else
-                return sleepLogs
+                return ()
         }
 
     member __.ExportAsync() =
         async {
             let! profile = client.GetProfileAsync()
             let offset = makeOffset profile.User.OffsetFromUtcMillis
-            let startDate = new DateTimeOffset(profile.User.MemberSince, offset)
 
-            return! exportSleepLogsAsync (startDate)
+            let now = DateTimeOffset.Now
+            let startDate = new DateTimeOffset(profile.User.MemberSince, offset)
+            let endDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, offset)
+
+            return! exportSleepLogsAsync startDate endDate
         }
         |> Async.Ignore

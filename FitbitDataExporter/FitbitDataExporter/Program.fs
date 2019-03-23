@@ -7,6 +7,9 @@ open System
 
 type Secret = JsonProvider<"""{"UserId": "user-id", "AccessToken": "token"}""">
 
+[<Literal>]
+let secretFilePath = @".\Secret.json"
+
 let loadSecret (filePath : string) =
     try
         use reader = new StreamReader(filePath)
@@ -36,21 +39,25 @@ let configureNLog () =
 
     NLog.LogManager.Configuration <- config
 
+let createLogger () =
+    configureNLog ()
+    NLog.LogManager.GetCurrentClassLogger() :> NLog.ILogger
+
+let run (logger : NLog.ILogger) (secret : Secret.Root) =
+    let client = new FitbitClient(secret.UserId, secret.AccessToken)
+    let exportLogger = new DataExportLogger(logger)
+    let exporter = new DataExporter(client, exportLogger)
+
+    exporter.ExportAsync() |> Async.RunSynchronously
+
 [<EntryPoint>]
 let main _ =
-    configureNLog ()
-    let logger = NLog.LogManager.GetCurrentClassLogger() :> NLog.ILogger
+    let logger = createLogger ()
 
-    let secretFilePath = @".\Secret.json"
-    let loadSecretResult = loadSecret secretFilePath
-    match loadSecretResult with
+    let result = loadSecret secretFilePath
+    match result with
     | Result.Ok secret ->
-        let client = new FitbitClient(secret.UserId, secret.AccessToken)
-        let exportLogger = new DataExportLogger(logger)
-        let exporter = new DataExporter(client, exportLogger)
-
-        exporter.ExportAsync() |> Async.RunSynchronously
-
+        run logger secret
         0
     | Result.Error e ->
         match e with

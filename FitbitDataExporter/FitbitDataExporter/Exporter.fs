@@ -47,35 +47,37 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWri
     let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
         writeDataToFileAsync DataModel.DataKind.SleepLogs sleepLogs.JsonValue date
 
-    let rec exportHeartRateTimeSeriesAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
+    let rec exportAllDayDataAsync(exportOneDayData : DateTimeOffset -> Async<unit>) (date : DateTimeOffset) (endDate : DateTimeOffset) =
         async {
             if date < endDate then
-                let! heartRateIntradayTimeSeries = client.GetHeartRateIntradayTimeSeriesAsync(date)
-                do! writeHeartRateIntradayTimeSeriesToFileAsync heartRateIntradayTimeSeries date
-
-                logger.InfoHeartRateIntradayTimeSeries(date)
-
+                do! exportOneDayData date
                 do! Async.Sleep 1000
-
-                return! exportHeartRateTimeSeriesAsync (date.AddDays(1.0)) endDate
+                return! exportAllDayDataAsync exportOneDayData (date.AddDays(1.0)) endDate
             else
                 return ()
         }
 
-    let rec exportSleepLogsAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
-        async {
-            if date < endDate then
-                let! sleepLogs = client.GetSleepLogsAsync(date)
-                do! writeSleepLogsToFileAsync sleepLogs date
+    let exportHeartRateTimeSeriesAsync =
+        let export =
+            fun date ->
+                async {
+                    let! heartRateIntradayTimeSeries = client.GetHeartRateIntradayTimeSeriesAsync(date)
+                    do! writeHeartRateIntradayTimeSeriesToFileAsync heartRateIntradayTimeSeries date
 
-                logger.InfoSleepLogs(date)
+                    logger.InfoHeartRateIntradayTimeSeries(date)
+                }
+        exportAllDayDataAsync export
 
-                do! Async.Sleep 1000
+    let exportSleepLogsAsync =
+        let export =
+            fun date ->
+                async {
+                    let! sleepLogs = client.GetSleepLogsAsync(date)
+                    do! writeSleepLogsToFileAsync sleepLogs date
 
-                return! exportSleepLogsAsync (date.AddDays(1.0)) endDate
-            else
-                return ()
-        }
+                    logger.InfoSleepLogs(date)
+                }
+        exportAllDayDataAsync export
 
     member __.ExportAsync() =
         async {

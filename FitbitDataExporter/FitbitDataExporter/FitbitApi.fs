@@ -19,6 +19,17 @@ type FitbitClient(userId : string, accessToken : string) =
         let localDate = date.LocalDateTime
         sprintf "%04d-%02d-%02d" localDate.Year localDate.Month localDate.Day
 
+    member __.GetHeartRateIntradayTimeSeriesAsync(date : DateTimeOffset) =
+        async {
+            let dateValue = formatDateInLocal date
+            let url = sprintf "%s/%s/user/%s/activities/heart/date/%s/1d/1sec.json" apiUrl version userId dateValue
+            let request = makeRequest HttpMethod.Get url
+            let! response = client.SendAsync(request) |> Async.AwaitTask
+            let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+
+            return DataModel.HeartRateIntradayTimeSeries.Parse(content)
+        }
+
     member __.GetSleepLogsAsync(date : DateTimeOffset) =
         async {
             let dateValue = formatDateInLocal date

@@ -3,6 +3,40 @@
 open FSharp.Data
 
 [<Literal>]
+let private HeartRateIntradayTimeSeriesSample = """
+{
+  "activities-heart": [
+    {
+      "dateTime": "2019-01-01",
+      "value": {
+        "customHeartRateZones": [],
+        "heartRateZones": [
+          {
+            "caloriesOut": 1000.1234,
+            "max": 100,
+            "min": 10,
+            "minutes": 1000,
+            "name": "Out of Range"
+          }
+        ],
+        "restingHeartRate": 10
+      }
+    }
+  ],
+  "activities-heart-intraday": {
+    "dataset": [
+      {
+        "time": "00:00:00",
+        "value": 10
+      }
+    ],
+    "datasetInterval": 1,
+    "datasetType": "minute"
+  }
+}
+"""
+
+[<Literal>]
 let private SleepLogsSample = """
 {
   "sleep": [
@@ -147,6 +181,8 @@ let private ProfileSample = """
   }
 }
 """
+
+type HeartRateIntradayTimeSeries = JsonProvider<HeartRateIntradayTimeSeriesSample>
 
 type SleepLogs = JsonProvider<SleepLogsSample, RootName="SleepLogs">
 

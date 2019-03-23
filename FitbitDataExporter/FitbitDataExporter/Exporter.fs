@@ -5,6 +5,8 @@ open FSharp.Data
 open System
 
 type IDataExportLogger =
+    abstract member InfoHeartRateIntradayTimeSeries : DateTimeOffset -> unit
+
     abstract member InfoSleepLogs : DateTimeOffset -> unit
 
 type IJsonFileWriter =
@@ -27,11 +29,33 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWri
 
         new TimeSpan(hours, minutes, seconds)
 
+    let writeHeartRateIntradayTimeSeriesToFileAsync (heartRateIntradayTimeSeries : DataModel.HeartRateIntradayTimeSeries.Root) (date : DateTimeOffset) =
+        async {
+            let localDate = date.LocalDateTime
+            let fileName = sprintf "heart_rate_intraday_time_series_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
+            do! jsonFileWriter.WriteAsync(fileName, heartRateIntradayTimeSeries.JsonValue)
+        }
+
     let writeSleepLogsToFileAsync (sleepLogs : DataModel.SleepLogs.SleepLog) (date : DateTimeOffset) =
         async {
             let localDate = date.LocalDateTime
             let fileName = sprintf "sleep_logs_%04d_%02d_%02d.json" localDate.Year localDate.Month localDate.Day
             do! jsonFileWriter.WriteAsync(fileName, sleepLogs.JsonValue)
+        }
+
+    let rec exportHeartRateTimeSeriesAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
+        async {
+            if date < endDate then
+                let! heartRateIntradayTimeSeries = client.GetHeartRateIntradayTimeSeriesAsync(date)
+                do! writeHeartRateIntradayTimeSeriesToFileAsync heartRateIntradayTimeSeries date
+
+                logger.InfoHeartRateIntradayTimeSeries(date)
+
+                do! Async.Sleep 1000
+
+                return! exportHeartRateTimeSeriesAsync (date.AddDays(1.0)) endDate
+            else
+                return ()
         }
 
     let rec exportSleepLogsAsync (date : DateTimeOffset) (endDate : DateTimeOffset) =
@@ -58,6 +82,8 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger, jsonFileWri
             let startDate = new DateTimeOffset(profile.User.MemberSince, offset)
             let endDate = new DateTimeOffset(now.Year, now.Month, now.Day, 0, 0, 0, offset)
 
-            return! exportSleepLogsAsync startDate endDate
+            do! exportHeartRateTimeSeriesAsync startDate endDate
+            do! exportSleepLogsAsync startDate endDate
+            return ()
         }
         |> Async.Ignore

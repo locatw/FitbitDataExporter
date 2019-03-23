@@ -45,7 +45,7 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
 
                 do! Async.Sleep 1000
 
-                return! exportSleepLogsAsync (date.AddDays(-1.0))
+                return! exportSleepLogsAsync (date.AddDays(1.0))
             else
                 return sleepLogs
         }
@@ -54,7 +54,8 @@ type DataExporter(client : FitbitClient, logger : IDataExportLogger) =
         async {
             let! profile = client.GetProfileAsync()
             let offset = makeOffset profile.User.OffsetFromUtcMillis
+            let startDate = new DateTimeOffset(profile.User.MemberSince, offset)
 
-            return! exportSleepLogsAsync (new DateTimeOffset(2019, 3, 22, 0, 0, 0, offset))
+            return! exportSleepLogsAsync (startDate)
         }
         |> Async.Ignore
